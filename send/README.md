@@ -1,6 +1,6 @@
 # 이메일 자동 전송 서버
 
-여러 사람에게 자동으로 이메일을 보낼 수 있는 Flask 기반 REST API 서버입니다.
+여러 사람에게 자동으로 이메일을 보낼 수 있는 Flask 기반 REST API 서버입니다.  gfyv mhba gxqu vsnh
 
 ## 기능
 

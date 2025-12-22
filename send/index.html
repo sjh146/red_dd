@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Sender - Dark Knight</title>
+    <link rel="stylesheet" href="/static/index.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 배경 이미지 레이어 -->
+        <div class="bg-overlay"></div>
+        
+        <!-- 헤더 -->
+        <header class="header">
+            <h1 class="title">
+                <span class="title-main">EMAIL</span>
+                <span class="title-divider">/</span>
+                <span class="title-sub">SENDER</span>
+            </h1>
+            <div class="sender-info" id="sender-info">
+                <span class="sender-label">발신자:</span>
+                <span class="sender-email" id="sender-email">확인 중...</span>
+            </div>
+        </header>
+
+        <!-- 메인 폼 -->
+        <main class="main-content">
+            <form id="email-form" class="email-form">
+                <!-- 수신자 입력 -->
+                <div class="form-group">
+                    <label for="recipients" class="label">
+                        <span class="label-text">수신자</span>
+                        <span class="label-accent">Recipients</span>
+                    </label>
+                    <textarea 
+                        id="recipients" 
+                        name="recipients" 
+                        class="textarea recipients-input"
+                        placeholder="이메일 주소를 입력하세요 (쉼표 또는 줄바꿈으로 구분)"
+                        required
+                    ></textarea>
+                    <small class="hint">여러 이메일은 쉼표(,) 또는 줄바꿈으로 구분하세요</small>
+                </div>
+
+                <!-- 제목 입력 -->
+                <div class="form-group">
+                    <label for="subject" class="label">
+                        <span class="label-text">제목</span>
+                        <span class="label-accent">Subject</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="subject" 
+                        name="subject" 
+                        class="input"
+                        placeholder="이메일 제목을 입력하세요"
+                        required
+                    >
+                </div>
+
+                <!-- 본문 입력 (텍스트) -->
+                <div class="form-group">
+                    <label for="body" class="label">
+                        <span class="label-text">본문</span>
+                        <span class="label-accent">Body</span>
+                    </label>
+                    <textarea 
+                        id="body" 
+                        name="body" 
+                        class="textarea body-input"
+                        placeholder="이메일 본문을 입력하세요"
+                        rows="6"
+                        required
+                    ></textarea>
+                </div>
+
+                <!-- HTML 본문 입력 (선택사항) -->
+                <div class="form-group">
+                    <label for="body-html" class="label">
+                        <span class="label-text">HTML 본문</span>
+                        <span class="label-accent">(Optional)</span>
+                    </label>
+                    <textarea 
+                        id="body-html" 
+                        name="body-html" 
+                        class="textarea html-input"
+                        placeholder='<div style="background-color: #1a1a1a; color: #e0e0e0; padding: 20px; font-family: Arial, sans-serif;">
+  <h1 style="color: #6a1b9a;">안녕하세요</h1>
+  <p style="font-size: 16px; line-height: 1.6;">이것은 HTML 이메일입니다.</p>
+</div>'
+                        rows="8"
+                    ></textarea>
+                    <small class="hint">
+                        💡 CSS 팁: 인라인 스타일(style="...")을 사용하세요. 
+                        <button type="button" class="hint-link" id="show-html-example" style="background: none; border: none; color: var(--accent-purple-light); cursor: pointer; text-decoration: underline; padding: 0; margin-left: 5px;">예시 보기</button>
+                    </small>
+                </div>
+
+                <!-- 전송 옵션 -->
+                <div class="form-group options-group">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="bulk-mode" name="bulk-mode" class="checkbox">
+                        <label for="bulk-mode" class="checkbox-label">
+                            <span class="checkbox-text">개별 전송 모드</span>
+                            <span class="checkbox-hint">각 수신자에게 개별적으로 전송</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 전송 버튼 -->
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary" id="send-btn">
+                        <span class="btn-text">전송</span>
+                        <span class="btn-accent">SEND</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="clear-btn">
+                        <span class="btn-text">초기화</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- 결과 메시지 -->
+            <div id="result-message" class="result-message hidden"></div>
+        </main>
+
+    </div>
+
+    <script>
+        const form = document.getElementById('email-form');
+        const resultMessage = document.getElementById('result-message');
+        const sendBtn = document.getElementById('send-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const senderEmail = document.getElementById('sender-email');
+
+        // 발신자 정보 로드
+        async function loadSenderInfo() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                if (data.from_email && data.from_email !== '설정되지 않음') {
+                    senderEmail.textContent = data.from_email;
+                    senderEmail.classList.add('configured');
+                } else if (data.smtp_username && data.smtp_username !== '설정되지 않음') {
+                    senderEmail.textContent = data.smtp_username + ' (기본값)';
+                    senderEmail.classList.add('default');
+                } else {
+                    senderEmail.textContent = '설정되지 않음';
+                    senderEmail.classList.add('not-configured');
+                }
+            } catch (error) {
+                senderEmail.textContent = '확인 불가';
+                senderEmail.classList.add('error');
+            }
+        }
+
+        // 페이지 로드 시 발신자 정보 확인
+        loadSenderInfo();
+
+        // 폼 제출 처리
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // 수신자 파싱
+            const recipientsText = document.getElementById('recipients').value.trim();
+            const recipients = recipientsText
+                .split(/[,\n]/)
+                .map(email => email.trim())
+                .filter(email => email.length > 0);
+
+            if (recipients.length === 0) {
+                showResult('수신자 이메일 주소를 입력하세요.', 'error');
+                return;
+            }
+
+            const formData = {
+                recipients: recipients,
+                subject: document.getElementById('subject').value.trim(),
+                body: document.getElementById('body').value.trim(),
+                body_html: document.getElementById('body-html').value.trim() || null
+            };
+
+            if (!formData.subject) {
+                showResult('이메일 제목을 입력하세요.', 'error');
+                return;
+            }
+
+            if (!formData.body && !formData.body_html) {
+                showResult('이메일 본문을 입력하세요.', 'error');
+                return;
+            }
+
+            // 전송 버튼 비활성화
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<span class="btn-text">전송 중...</span>';
+
+            try {
+                const endpoint = document.getElementById('bulk-mode').checked 
+                    ? '/send-bulk' 
+                    : '/send-email';
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (endpoint === '/send-bulk') {
+                        showResult(
+                            `전송 완료: 총 ${data.total}명 중 ${data.success_count}명 성공, ${data.fail_count}명 실패`,
+                            'success'
+                        );
+                    } else {
+                        showResult(data.message, 'success');
+                    }
+                    form.reset();
+                } else {
+                    showResult(data.error || '전송 실패', 'error');
+                }
+            } catch (error) {
+                showResult(`오류 발생: ${error.message}`, 'error');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<span class="btn-text">전송</span><span class="btn-accent">SEND</span>';
+            }
+        });
+
+        // 초기화 버튼
+        clearBtn.addEventListener('click', () => {
+            form.reset();
+            resultMessage.classList.add('hidden');
+        });
+
+        // HTML 예시 보기
+        const showHtmlExample = document.getElementById('show-html-example');
+        if (showHtmlExample) {
+            showHtmlExample.addEventListener('click', () => {
+                const htmlInput = document.getElementById('body-html');
+                const example = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* 일부 이메일 클라이언트에서 지원 */
+        body { font-family: Arial, sans-serif; background-color: #0a0a0a; }
+    </style>
+</head>
+<body style="background-color: #0a0a0a; color: #e0e0e0; padding: 20px; font-family: Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #111111; padding: 30px; border: 1px solid #2a2a2a;">
+        <h1 style="color: #6a1b9a; font-size: 28px; margin-bottom: 20px; border-bottom: 2px solid #6a1b9a; padding-bottom: 10px;">
+            안녕하세요!
+        </h1>
+        <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; margin-bottom: 15px;">
+            이것은 <strong style="color: #2e7d32;">HTML 형식</strong>의 이메일입니다.
+        </p>
+        <div style="background-color: #1a1a1a; padding: 15px; margin: 20px 0; border-left: 3px solid #6a1b9a;">
+            <p style="margin: 0; color: #888888;">인라인 스타일을 사용하면 대부분의 이메일 클라이언트에서 디자인이 적용됩니다.</p>
+        </div>
+        <a href="#" style="display: inline-block; background-color: #6a1b9a; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 0; margin-top: 20px;">
+            버튼 예시
+        </a>
+    </div>
+</body>
+</html>`;
+                
+                if (htmlInput.value.trim() === '') {
+                    htmlInput.value = example;
+                    showResult('HTML 예시가 입력란에 추가되었습니다. 수정하여 사용하세요.', 'success');
+                } else {
+                    if (confirm('현재 입력된 내용을 예시로 교체하시겠습니까?')) {
+                        htmlInput.value = example;
+                        showResult('HTML 예시로 교체되었습니다.', 'success');
+                    }
+                }
+            });
+        }
+
+        // 결과 메시지 표시
+        function showResult(message, type) {
+            resultMessage.textContent = message;
+            resultMessage.className = `result-message ${type}`;
+            resultMessage.classList.remove('hidden');
+            
+            // 5초 후 자동 숨김 (성공 시)
+            if (type === 'success') {
+                setTimeout(() => {
+                    resultMessage.classList.add('hidden');
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>
+

@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 import smtplib
 from email.mime.text import MIMEText
@@ -11,9 +11,11 @@ import logging
 from typing import List, Optional
 
 # 환경 변수 로드
-load_dotenv()
+# 현재 파일의 디렉토리에서 .env 파일 찾기
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(dotenv_path=env_path)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 CORS(app)  # CORS 활성화 (필요시 특정 도메인만 허용하도록 설정 가능)
 
 # 로깅 설정
@@ -79,7 +81,10 @@ def send_email(
                         msg.attach(part)
         
         # SMTP 서버 연결 및 이메일 전송
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+        logger.info(f"SMTP 연결 시도: {SMTP_SERVER}:{SMTP_PORT}")
+        logger.info(f"사용자명: {SMTP_USERNAME}")
+        
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10) as server:
             server.starttls()  # TLS 암호화
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
             server.send_message(msg)
@@ -91,9 +96,26 @@ def send_email(
             'recipients': recipients
         }
     
-    except smtplib.SMTPAuthenticationError:
-        error_msg = 'SMTP 인증 실패. 사용자명과 비밀번호를 확인하세요.'
+    except smtplib.SMTPAuthenticationError as e:
+        error_msg = f'SMTP 인증 실패: {str(e)}'
         logger.error(error_msg)
+        
+        # Gmail 사용 시 상세 안내
+        if 'gmail' in SMTP_SERVER.lower():
+            detailed_error = (
+                'Gmail SMTP 인증 실패!\n\n'
+                '가능한 원인:\n'
+                '1. 일반 Gmail 비밀번호를 사용하고 있음 (앱 비밀번호 필요)\n'
+                '2. 2단계 인증이 활성화되지 않음\n'
+                '3. 앱 비밀번호가 잘못 입력됨\n\n'
+                '해결 방법:\n'
+                '1. Google 계정 → 보안 → 2단계 인증 활성화\n'
+                '2. https://myaccount.google.com/apppasswords 에서 앱 비밀번호 생성\n'
+                '3. 생성된 16자리 앱 비밀번호를 .env 파일의 SMTP_PASSWORD에 입력\n'
+                '4. 앱 비밀번호의 공백은 제거하세요 (예: abcd efgh → abcdefgh)'
+            )
+            return {'success': False, 'error': detailed_error}
+        
         return {'success': False, 'error': error_msg}
     
     except smtplib.SMTPRecipientsRefused:
@@ -107,6 +129,12 @@ def send_email(
         return {'success': False, 'error': error_msg}
 
 
+@app.route('/')
+def index():
+    """메인 페이지"""
+    return send_from_directory('.', 'index.html')
+
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """서버 상태 확인"""
@@ -114,7 +142,8 @@ def health_check():
         'status': 'healthy',
         'smtp_server': SMTP_SERVER,
         'smtp_port': SMTP_PORT,
-        'from_email': FROM_EMAIL
+        'from_email': FROM_EMAIL if FROM_EMAIL else '설정되지 않음',
+        'smtp_username': SMTP_USERNAME if SMTP_USERNAME else '설정되지 않음'
     })
 
 
@@ -258,10 +287,29 @@ def send_bulk_email():
 
 
 if __name__ == '__main__':
-    # 환경 변수 확인
+    # 환경 변수 확인 및 디버깅
+    env_file_path = os.path.join(os.path.dirname(__file__), '.env')
+    logger.info(f".env 파일 경로: {env_file_path}")
+    logger.info(f".env 파일 존재 여부: {os.path.exists(env_file_path)}")
+    
     if not SMTP_USERNAME or not SMTP_PASSWORD:
-        logger.warning("SMTP_USERNAME 또는 SMTP_PASSWORD가 설정되지 않았습니다.")
-        logger.warning(".env 파일을 확인하거나 환경 변수를 설정하세요.")
+        logger.warning("=" * 60)
+        logger.warning("⚠️  SMTP 설정이 완료되지 않았습니다!")
+        logger.warning("=" * 60)
+        logger.warning(f"SMTP_USERNAME: {'설정됨' if SMTP_USERNAME else '❌ 설정되지 않음'}")
+        logger.warning(f"SMTP_PASSWORD: {'설정됨' if SMTP_PASSWORD else '❌ 설정되지 않음'}")
+        logger.warning(f"FROM_EMAIL: {FROM_EMAIL if FROM_EMAIL else '❌ 설정되지 않음'}")
+        logger.warning("")
+        logger.warning("해결 방법:")
+        logger.warning(f"1. {env_file_path} 파일 생성")
+        logger.warning("2. env.example 파일을 참고하여 설정 입력")
+        logger.warning("3. Gmail 사용 시 앱 비밀번호 사용 필수!")
+        logger.warning("=" * 60)
+    else:
+        logger.info("✅ SMTP 설정 확인됨")
+        logger.info(f"   서버: {SMTP_SERVER}:{SMTP_PORT}")
+        logger.info(f"   사용자명: {SMTP_USERNAME}")
+        logger.info(f"   발신자: {FROM_EMAIL}")
     
     # 서버 실행
     port = int(os.getenv('PORT', '5000'))
