@@ -9,6 +9,9 @@ import os
 from dotenv import load_dotenv
 import logging
 from typing import List, Optional
+import tempfile
+import shutil
+import json
 
 # 환경 변수 로드
 # 현재 파일의 디렉토리에서 .env 파일 찾기
@@ -153,26 +156,67 @@ def send_email_endpoint():
     이메일 전송 API 엔드포인트
     
     요청 형식:
-    {
+    - JSON: {
         "recipients": ["email1@example.com", "email2@example.com"],
         "subject": "이메일 제목",
         "body": "이메일 본문",
         "body_html": "<h1>HTML 본문</h1>",  // 선택사항
         "attachments": ["/path/to/file1.pdf", "/path/to/file2.jpg"]  // 선택사항
     }
+    - FormData: multipart/form-data로 파일 첨부 가능
     """
+    temp_files = []  # 임시 파일 추적용
     try:
-        data = request.get_json()
-        
-        # 필수 필드 검증
-        if not data:
-            return jsonify({'success': False, 'error': '요청 데이터가 없습니다.'}), 400
-        
-        recipients = data.get('recipients', [])
-        subject = data.get('subject', '')
-        body = data.get('body', '')
-        body_html = data.get('body_html', None)
-        attachments = data.get('attachments', None)
+        # 파일 첨부가 있는 경우 (FormData)
+        if request.files:
+            recipients_json = request.form.get('recipients')
+            if recipients_json:
+                recipients = eval(recipients_json) if isinstance(eval(recipients_json), list) else [recipients_json]
+            else:
+                recipients = []
+            
+            subject = request.form.get('subject', '')
+            body = request.form.get('body', '')
+            body_html = request.form.get('body_html', None)
+            
+            # 업로드된 파일 처리
+            uploaded_files = request.files.getlist('attachments')
+            attachment_paths = []
+            
+            if uploaded_files:
+                temp_dir = tempfile.mkdtemp()
+                for file in uploaded_files:
+                    if file.filename:
+                        # 파일 크기 제한 (25MB)
+                        file.seek(0, os.SEEK_END)
+                        file_size = file.tell()
+                        file.seek(0)
+                        
+                        if file_size > 25 * 1024 * 1024:  # 25MB
+                            return jsonify({
+                                'success': False,
+                                'error': f'파일 크기가 너무 큽니다: {file.filename} (최대 25MB)'
+                            }), 400
+                        
+                        # 임시 파일로 저장
+                        file_path = os.path.join(temp_dir, file.filename)
+                        file.save(file_path)
+                        attachment_paths.append(file_path)
+                        temp_files.append(file_path)
+                        temp_files.append(temp_dir)  # 디렉토리도 추적
+        else:
+            # JSON 요청 처리
+            data = request.get_json()
+            
+            # 필수 필드 검증
+            if not data:
+                return jsonify({'success': False, 'error': '요청 데이터가 없습니다.'}), 400
+            
+            recipients = data.get('recipients', [])
+            subject = data.get('subject', '')
+            body = data.get('body', '')
+            body_html = data.get('body_html', None)
+            attachment_paths = data.get('attachments', None)
         
         # 유효성 검사
         if not recipients:
@@ -193,8 +237,18 @@ def send_email_endpoint():
             subject=subject,
             body=body,
             body_html=body_html,
-            attachments=attachments
+            attachments=attachment_paths if attachment_paths else None
         )
+        
+        # 임시 파일 정리
+        for temp_file in temp_files:
+            try:
+                if os.path.isfile(temp_file):
+                    os.remove(temp_file)
+                elif os.path.isdir(temp_file):
+                    shutil.rmtree(temp_file)
+            except Exception as e:
+                logger.warning(f"임시 파일 삭제 실패: {temp_file}, {str(e)}")
         
         if result['success']:
             return jsonify(result), 200
@@ -202,6 +256,16 @@ def send_email_endpoint():
             return jsonify(result), 500
     
     except Exception as e:
+        # 오류 발생 시 임시 파일 정리
+        for temp_file in temp_files:
+            try:
+                if os.path.isfile(temp_file):
+                    os.remove(temp_file)
+                elif os.path.isdir(temp_file):
+                    shutil.rmtree(temp_file)
+            except:
+                pass
+        
         logger.error(f"API 오류: {str(e)}")
         return jsonify({
             'success': False,
@@ -215,27 +279,73 @@ def send_bulk_email():
     대량 이메일 전송 API (개별 이메일로 전송)
     
     요청 형식:
-    {
+    - JSON: {
         "recipients": ["email1@example.com", "email2@example.com"],
         "subject": "이메일 제목",
         "body": "이메일 본문",
         "body_html": "<h1>HTML 본문</h1>",  // 선택사항
         "attachments": ["/path/to/file1.pdf"]  // 선택사항
     }
+    - FormData: multipart/form-data로 파일 첨부 가능
     
     각 수신자에게 개별적으로 이메일을 전송합니다.
     """
+    temp_files = []  # 임시 파일 추적용
     try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({'success': False, 'error': '요청 데이터가 없습니다.'}), 400
-        
-        recipients = data.get('recipients', [])
-        subject = data.get('subject', '')
-        body = data.get('body', '')
-        body_html = data.get('body_html', None)
-        attachments = data.get('attachments', None)
+        # 파일 첨부가 있는 경우 (FormData)
+        if request.files:
+            recipients_json = request.form.get('recipients')
+            if recipients_json:
+                try:
+                    recipients = json.loads(recipients_json)
+                    if not isinstance(recipients, list):
+                        recipients = [recipients]
+                except json.JSONDecodeError:
+                    recipients = [recipients_json] if recipients_json else []
+            else:
+                recipients = []
+            
+            subject = request.form.get('subject', '')
+            body = request.form.get('body', '')
+            body_html = request.form.get('body_html', None)
+            
+            # 업로드된 파일 처리
+            uploaded_files = request.files.getlist('attachments')
+            attachment_paths = []
+            
+            if uploaded_files:
+                temp_dir = tempfile.mkdtemp()
+                for file in uploaded_files:
+                    if file.filename:
+                        # 파일 크기 제한 (25MB)
+                        file.seek(0, os.SEEK_END)
+                        file_size = file.tell()
+                        file.seek(0)
+                        
+                        if file_size > 25 * 1024 * 1024:  # 25MB
+                            return jsonify({
+                                'success': False,
+                                'error': f'파일 크기가 너무 큽니다: {file.filename} (최대 25MB)'
+                            }), 400
+                        
+                        # 임시 파일로 저장
+                        file_path = os.path.join(temp_dir, file.filename)
+                        file.save(file_path)
+                        attachment_paths.append(file_path)
+                        temp_files.append(file_path)
+                        temp_files.append(temp_dir)  # 디렉토리도 추적
+        else:
+            # JSON 요청 처리
+            data = request.get_json()
+            
+            if not data:
+                return jsonify({'success': False, 'error': '요청 데이터가 없습니다.'}), 400
+            
+            recipients = data.get('recipients', [])
+            subject = data.get('subject', '')
+            body = data.get('body', '')
+            body_html = data.get('body_html', None)
+            attachment_paths = data.get('attachments', None)
         
         if not recipients or not isinstance(recipients, list):
             return jsonify({'success': False, 'error': '수신자 이메일 주소가 필요합니다.'}), 400
@@ -257,7 +367,7 @@ def send_bulk_email():
                 subject=subject,
                 body=body,
                 body_html=body_html,
-                attachments=attachments
+                attachments=attachment_paths if attachment_paths else None
             )
             results.append({
                 'recipient': recipient,
@@ -270,6 +380,16 @@ def send_bulk_email():
             else:
                 fail_count += 1
         
+        # 임시 파일 정리
+        for temp_file in temp_files:
+            try:
+                if os.path.isfile(temp_file):
+                    os.remove(temp_file)
+                elif os.path.isdir(temp_file):
+                    shutil.rmtree(temp_file)
+            except Exception as e:
+                logger.warning(f"임시 파일 삭제 실패: {temp_file}, {str(e)}")
+        
         return jsonify({
             'success': True,
             'total': len(recipients),
@@ -279,6 +399,16 @@ def send_bulk_email():
         }), 200
     
     except Exception as e:
+        # 오류 발생 시 임시 파일 정리
+        for temp_file in temp_files:
+            try:
+                if os.path.isfile(temp_file):
+                    os.remove(temp_file)
+                elif os.path.isdir(temp_file):
+                    shutil.rmtree(temp_file)
+            except:
+                pass
+        
         logger.error(f"대량 전송 API 오류: {str(e)}")
         return jsonify({
             'success': False,

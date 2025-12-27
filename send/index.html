@@ -97,6 +97,29 @@
                     </small>
                 </div>
 
+                <!-- 파일 첨부 -->
+                <div class="form-group">
+                    <label for="attachments" class="label">
+                        <span class="label-text">파일 첨부</span>
+                        <span class="label-accent">Attachments</span>
+                    </label>
+                    <div class="file-upload-wrapper">
+                        <input 
+                            type="file" 
+                            id="attachments" 
+                            name="attachments" 
+                            class="file-input"
+                            multiple
+                            accept="*/*"
+                        >
+                        <label for="attachments" class="file-label">
+                            <span class="file-label-text">📎 파일 선택 (여러 개 선택 가능)</span>
+                        </label>
+                        <div id="file-list" class="file-list"></div>
+                    </div>
+                    <small class="hint">최대 파일 크기: 25MB (이메일 서버 제한에 따라 다를 수 있습니다)</small>
+                </div>
+
                 <!-- 전송 옵션 -->
                 <div class="form-group options-group">
                     <div class="checkbox-wrapper">
@@ -157,6 +180,48 @@
         // 페이지 로드 시 발신자 정보 확인
         loadSenderInfo();
 
+        // 파일 목록 표시
+        const fileInput = document.getElementById('attachments');
+        const fileList = document.getElementById('file-list');
+        let selectedFiles = [];
+
+        fileInput.addEventListener('change', (e) => {
+            selectedFiles = Array.from(e.target.files);
+            updateFileList();
+        });
+
+        function updateFileList() {
+            fileList.innerHTML = '';
+            if (selectedFiles.length === 0) {
+                return;
+            }
+
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                fileItem.innerHTML = `
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${fileSize} MB</span>
+                    <button type="button" class="file-remove" data-index="${index}">×</button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+
+            // 파일 제거 버튼 이벤트
+            fileList.querySelectorAll('.file-remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    selectedFiles.splice(index, 1);
+                    updateFileList();
+                    // input 요소 업데이트
+                    const dt = new DataTransfer();
+                    selectedFiles.forEach(file => dt.items.add(file));
+                    fileInput.files = dt.files;
+                });
+            });
+        }
+
         // 폼 제출 처리
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -173,19 +238,16 @@
                 return;
             }
 
-            const formData = {
-                recipients: recipients,
-                subject: document.getElementById('subject').value.trim(),
-                body: document.getElementById('body').value.trim(),
-                body_html: document.getElementById('body-html').value.trim() || null
-            };
+            const subject = document.getElementById('subject').value.trim();
+            const body = document.getElementById('body').value.trim();
+            const bodyHtml = document.getElementById('body-html').value.trim() || null;
 
-            if (!formData.subject) {
+            if (!subject) {
                 showResult('이메일 제목을 입력하세요.', 'error');
                 return;
             }
 
-            if (!formData.body && !formData.body_html) {
+            if (!body && !bodyHtml) {
                 showResult('이메일 본문을 입력하세요.', 'error');
                 return;
             }
@@ -199,13 +261,40 @@
                     ? '/send-bulk' 
                     : '/send-email';
                 
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
+                // 파일이 있는 경우 FormData 사용, 없으면 JSON 사용
+                let response;
+                if (selectedFiles.length > 0) {
+                    const formData = new FormData();
+                    formData.append('recipients', JSON.stringify(recipients));
+                    formData.append('subject', subject);
+                    formData.append('body', body);
+                    if (bodyHtml) {
+                        formData.append('body_html', bodyHtml);
+                    }
+                    selectedFiles.forEach((file) => {
+                        formData.append('attachments', file);
+                    });
+
+                    response = await fetch(endpoint, {
+                        method: 'POST',
+                        body: formData
+                    });
+                } else {
+                    const jsonData = {
+                        recipients: recipients,
+                        subject: subject,
+                        body: body,
+                        body_html: bodyHtml
+                    };
+
+                    response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(jsonData)
+                    });
+                }
 
                 const data = await response.json();
 
@@ -219,6 +308,8 @@
                         showResult(data.message, 'success');
                     }
                     form.reset();
+                    selectedFiles = [];
+                    updateFileList();
                 } else {
                     showResult(data.error || '전송 실패', 'error');
                 }
@@ -233,6 +324,8 @@
         // 초기화 버튼
         clearBtn.addEventListener('click', () => {
             form.reset();
+            selectedFiles = [];
+            updateFileList();
             resultMessage.classList.add('hidden');
         });
 
