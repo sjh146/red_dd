@@ -25,6 +25,9 @@ class DOMXSSScanner:
         })
         self.vulnerabilities = []
         self.js_files = []
+        # 실습용: 모든 파일 분석 (라이브러리도 포함)
+        self.library_patterns = []  # 빈 리스트로 설정하여 필터링 비활성화
+        # 실습용: 모든 위험한 Sink 함수 포함
         self.dangerous_sinks = [
             'document.write',
             'document.writeln',
@@ -32,35 +35,49 @@ class DOMXSSScanner:
             'outerHTML',
             'insertAdjacentHTML',
             'eval',
-            'Function',
-            'setTimeout',
-            'setInterval',
-            'location.href',
-            'location.replace',
-            'location.assign',
-            'window.location',
-            'document.location',
-            'document.cookie',
-            'document.domain',
-            'document.open',
-            'document.close',
-            'document.execCommand',
-            'document.createElement',
+            'Function',  # 실습용: 포함
+            'setTimeout',  # 실습용: 포함
+            'setInterval',  # 실습용: 포함
+            'location.href',  # 실습용: 포함
+            'location.replace',  # 실습용: 포함
+            'location.assign',  # 실습용: 포함
+            'window.location',  # 실습용: 포함
+            'document.location',  # 실습용: 포함
+            'document.cookie',  # 실습용: 포함
+            'document.domain',  # 실습용: 포함
+            'document.open',  # 실습용: 포함
+            'document.close',  # 실습용: 포함
+            'document.execCommand',  # 실습용: 포함
+            'document.createElement',  # 실습용: 포함
             'jQuery.html',
             'jQuery.append',
             'jQuery.prepend',
             'jQuery.after',
             'jQuery.before',
+            'jQuery.insertAfter',
+            'jQuery.insertBefore',
+            'jQuery.wrap',
+            'jQuery.wrapAll',
+            'jQuery.wrapInner',
             '$.html',
             '$.append',
             '$.prepend',
             '$.after',
             '$.before',
+            '$.insertAfter',
+            '$.insertBefore',
+            '$.wrap',
+            '$.wrapAll',
+            '$.wrapInner',
             'ReactDOM.render',
             'React.createElement',
+            'ReactDOMServer.renderToString',
             'dangerouslySetInnerHTML',
             'v-html',
-            'ng-bind-html'
+            'ng-bind-html',
+            'angular.element',
+            'Vue.compile',
+            'DOMParser.parseFromString'
         ]
         self.user_input_sources = [
             'location.hash',
@@ -183,6 +200,11 @@ class DOMXSSScanner:
             print(f"[-] HTTP 요청 실패: {e}")
             return None
 
+    def is_library_file(self, url):
+        """라이브러리 파일인지 확인 (실습용: 항상 False 반환)"""
+        # 실습용: 모든 파일 분석
+        return False
+
     def extract_js_files(self, html_content):
         """HTML에서 JavaScript 파일 추출"""
         soup = BeautifulSoup(html_content, 'html.parser')
@@ -195,6 +217,8 @@ class DOMXSSScanner:
             js_url = script.get('src')
             if js_url:
                 absolute_url = urljoin(self.target_url, js_url)
+                
+                # 실습용: 모든 파일 분석
                 self.js_files.append({
                     'type': 'external',
                     'url': absolute_url,
@@ -248,61 +272,154 @@ class DOMXSSScanner:
                 self.analyze_js_code(js_file['code'], f"inline_{js_file['index']}")
 
     def analyze_js_code(self, js_code, source):
-        """JavaScript 코드 분석"""
+        """JavaScript 코드 분석 (실습용: 모든 파일 분석)"""
+        # 실습용: 라이브러리 파일도 분석
+        
         # 위험한 Sink 함수 찾기
         for sink in self.dangerous_sinks:
-            pattern = re.compile(r'\b' + re.escape(sink) + r'\s*\(', re.IGNORECASE)
+            # 더 정확한 패턴 매칭
+            if sink in ['innerHTML', 'outerHTML', 'insertAdjacentHTML']:
+                # 할당 패턴만 찾기 (=, += 등)
+                pattern = re.compile(r'\.' + re.escape(sink) + r'\s*[=+]', re.IGNORECASE)
+            elif sink == 'eval':
+                # eval( 패턴
+                pattern = re.compile(r'\beval\s*\(', re.IGNORECASE)
+            elif sink in ['document.write', 'document.writeln']:
+                # document.write( 패턴
+                pattern = re.compile(r'\b' + re.escape(sink) + r'\s*\(', re.IGNORECASE)
+            elif sink.startswith('jQuery.') or sink.startswith('$.'):
+                # jQuery 메서드 패턴
+                pattern = re.compile(r'\b' + re.escape(sink) + r'\s*\(', re.IGNORECASE)
+            else:
+                pattern = re.compile(r'\b' + re.escape(sink) + r'\s*\(', re.IGNORECASE)
+            
             matches = pattern.finditer(js_code)
             
             for match in matches:
-                # 컨텍스트 추출 (앞뒤 200자)
-                start = max(0, match.start() - 200)
-                end = min(len(js_code), match.end() + 200)
+                # 컨텍스트 추출 (앞뒤 300자로 확장)
+                start = max(0, match.start() - 300)
+                end = min(len(js_code), match.end() + 300)
                 context = js_code[start:end]
                 
-                # 사용자 입력 소스 확인
+                # 사용자 입력 소스 확인 (더 정확한 패턴)
                 user_input_found = False
                 input_source = None
                 
+                # Source와 Sink가 실제로 연결되어 있는지 확인
                 for input_source_pattern in self.user_input_sources:
-                    if re.search(r'\b' + re.escape(input_source_pattern) + r'\b', context, re.IGNORECASE):
-                        user_input_found = True
-                        input_source = input_source_pattern
-                        break
+                    # Source 패턴 찾기
+                    source_pattern = re.compile(
+                        r'\b' + re.escape(input_source_pattern) + r'\b',
+                        re.IGNORECASE
+                    )
+                    
+                    if source_pattern.search(context):
+                        # 실제 데이터 흐름 확인
+                        # 예: location.hash가 innerHTML에 직접 할당되는지 확인
+                        source_match = source_pattern.search(context)
+                        sink_match_pos = match.start() - start
+                        
+                        # Source와 Sink 사이의 코드 확인
+                        between_code = context[source_match.end():sink_match_pos]
+                        
+                        # 간단한 변수 할당 패턴 확인
+                        # 예: var x = location.hash; ... innerHTML = x;
+                        if re.search(r'=\s*[^;]*' + re.escape(input_source_pattern), between_code, re.IGNORECASE):
+                            user_input_found = True
+                            input_source = input_source_pattern
+                            break
+                        
+                        # 직접 사용 패턴 확인
+                        # 예: innerHTML = location.hash 또는 insertAdjacentHTML("afterend", location.pathname)
+                        direct_patterns = [
+                            # innerHTML = location.hash
+                            r'\.' + re.escape(sink) + r'\s*=\s*[^=]*' + re.escape(input_source_pattern),
+                            # insertAdjacentHTML("position", location.pathname)
+                            r'\.' + re.escape(sink) + r'\s*\([^)]*' + re.escape(input_source_pattern),
+                            # document.write(location.hash)
+                            r'\b' + re.escape(sink) + r'\s*\([^)]*' + re.escape(input_source_pattern),
+                            # eval(location.hash)
+                            r'\beval\s*\([^)]*' + re.escape(input_source_pattern),
+                        ]
+                        
+                        for direct_pattern in direct_patterns:
+                            if re.search(direct_pattern, context, re.IGNORECASE):
+                                user_input_found = True
+                                input_source = input_source_pattern
+                                break
+                        
+                        if user_input_found:
+                            break
                 
                 # 취약점 발견
                 if user_input_found:
                     line_num = js_code[:match.start()].count('\n') + 1
-                    vulnerability = {
-                        'type': 'DOM XSS',
-                        'severity': 'High',
-                        'sink': sink,
-                        'source': input_source,
-                        'location': source,
-                        'line': line_num,
-                        'context': context.strip(),
-                        'payload': self.generate_payload(sink, input_source)
-                    }
-                    self.vulnerabilities.append(vulnerability)
                     
-                    print(f"\n    ⚠️  취약점 발견!")
-                    print(f"        - Sink: {sink}")
-                    print(f"        - Source: {input_source}")
-                    print(f"        - 위치: {source} (라인 {line_num})")
-                    print(f"        - 컨텍스트: {context[:100]}...")
+                    # 중복 제거 (같은 위치의 같은 취약점)
+                    is_duplicate = False
+                    for existing_vuln in self.vulnerabilities:
+                        if (existing_vuln['sink'] == sink and 
+                            existing_vuln['source'] == input_source and
+                            existing_vuln['location'] == source and
+                            abs(existing_vuln['line'] - line_num) < 5):
+                            is_duplicate = True
+                            break
+                    
+                    if not is_duplicate:
+                        vulnerability = {
+                            'type': 'DOM XSS',
+                            'severity': 'High',
+                            'sink': sink,
+                            'source': input_source,
+                            'location': source,
+                            'line': line_num,
+                            'context': context.strip(),
+                            'payload': self.generate_payload(sink, input_source)
+                        }
+                        self.vulnerabilities.append(vulnerability)
+                        
+                        print(f"\n    ⚠️  취약점 발견!")
+                        print(f"        - Sink: {sink}")
+                        print(f"        - Source: {input_source}")
+                        print(f"        - 위치: {source} (라인 {line_num})")
+                        print(f"        - 컨텍스트: {context[:150]}...")
         
-        # 추가 패턴 검색
-        # location.hash 직접 사용
-        if re.search(r'location\.hash\s*[=:]', js_code, re.IGNORECASE):
-            print(f"    ⚠️  location.hash 직접 사용 발견: {source}")
+        # 실습용: 추가 패턴 검색 (모든 패턴 포함)
+        # location.hash가 innerHTML에 직접 할당되는 경우
+        if re.search(r'\.innerHTML\s*=\s*[^=]*location\.hash', js_code, re.IGNORECASE):
+            line_num = js_code.find('location.hash')
+            if line_num > 0:
+                line_num = js_code[:line_num].count('\n') + 1
+                print(f"    ⚠️  location.hash → innerHTML 직접 할당 발견: {source} (라인 {line_num})")
         
-        # eval() 사용
-        if re.search(r'\beval\s*\(', js_code, re.IGNORECASE):
-            print(f"    ⚠️  eval() 사용 발견: {source}")
+        # eval()에 사용자 입력이 직접 전달되는 경우
+        if re.search(r'eval\s*\(\s*[^)]*location\.(hash|search)', js_code, re.IGNORECASE):
+            line_num = js_code.find('eval')
+            if line_num > 0:
+                line_num = js_code[:line_num].count('\n') + 1
+                print(f"    ⚠️  eval()에 사용자 입력 직접 전달 발견: {source} (라인 {line_num})")
         
-        # innerHTML 사용
-        if re.search(r'\.innerHTML\s*=', js_code, re.IGNORECASE):
-            print(f"    ⚠️  innerHTML 사용 발견: {source}")
+        # 실습용: 추가 위험 패턴 검색
+        # location.search/hash 직접 사용
+        if re.search(r'location\.(hash|search)\s*[=:]', js_code, re.IGNORECASE):
+            matches = list(re.finditer(r'location\.(hash|search)\s*[=:]', js_code, re.IGNORECASE))
+            for match in matches[:3]:  # 최대 3개만 표시
+                line_num = js_code[:match.start()].count('\n') + 1
+                print(f"    ℹ️  location.{match.group(1)} 직접 사용 발견: {source} (라인 {line_num})")
+        
+        # document.cookie 직접 할당
+        if re.search(r'document\.cookie\s*=', js_code, re.IGNORECASE):
+            matches = list(re.finditer(r'document\.cookie\s*=', js_code, re.IGNORECASE))
+            for match in matches[:3]:
+                line_num = js_code[:match.start()].count('\n') + 1
+                print(f"    ⚠️  document.cookie 직접 할당 발견: {source} (라인 {line_num})")
+        
+        # setTimeout/setInterval에 문자열 전달
+        if re.search(r'(setTimeout|setInterval)\s*\(\s*["\']', js_code, re.IGNORECASE):
+            matches = list(re.finditer(r'(setTimeout|setInterval)\s*\(\s*["\']', js_code, re.IGNORECASE))
+            for match in matches[:3]:
+                line_num = js_code[:match.start()].count('\n') + 1
+                print(f"    ⚠️  {match.group(1)}에 문자열 전달 발견: {source} (라인 {line_num})")
 
     def generate_payload(self, sink, source):
         """XSS 페이로드 생성"""
