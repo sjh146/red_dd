@@ -1,0 +1,31 @@
+Task 2: f_template/naver/login.html — nlog.html 정제
+====================================================
+Date: 2026-07-27
+
+Source: f_template/naver/nlog.html (249 lines)
+Target: f_template/naver/login.html
+
+Changes made:
+1. Removed data-i18n-json from <html> tag
+2. Changed CSS ref from /login/css/v3/global_login.css → login.css
+3. Removed global_login_dark.css <link> (merged into login.css)
+4. Removed line 8: 4 script tags (nlog.js, gfp-display-sdk, wtm.pstatic.net, synchronizer.js)
+5. Kept data-theme="greenLight" on <body>
+6. Removed line 11: ntm_scripts + prefers-color-scheme dark script
+7. Removed lines 118-122: passkeyBtn_column li block
+8. Removed lines 132-136: passkeyBtn_row li block
+9. Removed lines 145-161: qronetime_link device_view blocks (QR/OTP)
+10. Removed lines 201-203: banner_wrap pc block (ad)
+11. Removed lines 232-240: hidden inputs (nclicks_nsc, removeLink, hide_util, ncaptchaSplit, onload_pk, locale, adult_surl_v2, ispopup, isPc)
+12. Removed line 241: nv_stat div
+13. Removed lines 242-245: script tags (gfp-core.js, passkeyApi.js, login.js, ncaptcha-api.js)
+14. Removed line 249: ncaptcha-iframe
+
+Verification results:
+- grep -c "<script" → 0 ✓
+- grep "login.css" → 1 local CSS ref ✓
+- grep -c "ssl.pstatic.net" → 5 (CDN images preserved) ✓
+- grep -c 'class="naver_logo"' → 1 ✓
+- grep -c 'id="id"' → 1 ✓
+- grep -c 'id="pw"' → 1 ✓
+- grep "로그인" → found in title, login stay label, and login button ✓

@@ -1,0 +1,199 @@
+<html lang="ko"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+    <title data-i18n="pageTitle">로그인 - NAVER</title>
+    <link rel="stylesheet" type="text/css" href="login.css">
+</head>
+
+<body data-theme="greenLight">
+    <div class="wrap">
+        <div class="u_skip"><a href="#content">본문 바로가기</a></div>
+
+        <div class="container">
+            <main class="inner">
+                <header id="header" class="header" role="banner">
+                    <div class="header_inner">
+                        <div class="naver_logo"><a href="https://www.naver.com" class="logo nlog-click" id="log.naver">
+                            <h1 class="blind" data-i18n="HeaderNaver">네이버</h1>
+                        </a></div>
+                    </div>
+                </header>
+
+                <div id="content" class="content">
+
+                    <div class="content_wrap">
+                        <form class="form" id="frmNIDLogin" name="frmNIDLogin" target="_top" autocomplete="off" action="https://nid.naver.com/nidlogin.login" method="POST">
+                            <input type="hidden" name="dynamicKey" id="dynamicKey" value="Wsw6vTgXxkJy3ra36oN78u3PtFjo1S_i2LZY3a6uZTLm1XTo1mgvGPTg5iAkRoGaeoEsI593C5l1qtiww4rjwbwrebIQS1gMLUJDqi-6ock">
+
+                            <input type="hidden" name="sessionKey" id="sessionKey" value="">
+<input type="hidden" name="show_pk" id="show_pk" value="true">
+<input type="hidden" name="wtoken" id="wtoken" value="">
+<input type="hidden" name="svctype" id="svctype" value="1">
+<input type="hidden" name="bvsd" id="bvsd" value="">
+<input type="hidden" name="locale" id="locale" value="zh-Hans_CN">
+<input type="hidden" name="url" id="url" value="https://www.naver.com/">
+<input type="hidden" name="eccpw" id="eccpw" value="">
+<input type="hidden" name="template_url" id="template_url" value="%2Fnidlogin.login%3Fmode%3Dform%26url%3Dhttps%3A%2F%2Fwww.naver.com%2F">
+<input type="hidden" name="enctp" id="enctp" value="19">
+<input type="hidden" name="next_step" id="next_step" value="false">
+<input type="hidden" name="template_type" id="template_type" value="V3_DESKTOP_DEFAULT">
+<input type="hidden" name="smart_LEVEL" id="smart_LEVEL" value="1">
+
+
+                            <ul class="form_list">
+                                <li class="form_id">
+                                    <div class="form_data">
+                                        <label for="id" class="input_label" data-i18n="idLabel">ID 또는 휴대폰 번호</label>
+                                        <div class="input_wrap">
+                                            <input id="id" name="id" value="" type="text" aria-label="ID 또는 휴대폰 번호" class="input_text" data-i18n="inputID" maxlength="41" data-input-filter="ascii" placeholder="">
+                                            <div class="btn_input">
+
+                                                <button type="button" class="btn_delete" tabindex="0"><span class="blind">삭제</span></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="form_pw">
+                                    <div class="form_data">
+                                        <label for="pw" class="input_label" data-i18n="pwLabel">비밀번호</label>
+                                        <div class="input_wrap">
+                                            <input id="pw" name="pw" type="password" aria-label="비밀번호" class="input_text" data-i18n="inputPW" maxlength="16" data-input-filter="ascii">
+                                            <div class="btn_input">
+                                                <button type="button" class="btn_hide" tabindex="0"><span class="blind" data-i18n="btnHide">비밀번호 표시</span></button>
+                                                <button type="button" class="btn_delete" tabindex="0"><span class="blind" data-i18n="btnDelete">삭제</span></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+
+                            <div class="form_message" data-case="메시지 == 아이디메시지" role="alert" style="display:none">
+                                <span class="text" data-i18n="idComment">请输入ID或手机号。</span>
+                            </div>
+                            <div class="form_message" data-case="메시지 == 패스워드메시지" role="alert" style="display:none">
+                                <span class="text" data-i18n="pwComment">请输入密码。</span>
+                            </div>
+                            <div class="form_message capslock" data-case="메시지 == CapsLock" role="alert" style="display:none">
+                                <span class="text" data-i18n="CapsComment">键盘左侧的大写锁定（Caps Lock）已开启。请确认密码。</span>
+                            </div>
+                            <div class="form_message" data-case="메시지 == 한글입력불가" role="alert" style="display:none">
+                                <span class="text" data-i18n="hangulComment">ID和密码只能使用英文字母、数字和特殊字符。</span>
+                            </div>
+                            <div class="form_message error" data-case="메시지 == 아이디패스키오류메시지" role="alert" style="display:none">
+                                <span class="text" data-i18n="passkeyErrorComment">密钥登录失败，请重试。</span>
+                            </div>
+                            <div class="form_message error" data-case="메시지 == 비번패스키오류메시지" role="alert" style="display:none">
+                                <span class="text" data-i18n="passkeyErrorComment">密钥登录失败，请重试。</span>
+                            </div>
+                            <div class="form_message" data-case="메시지 == 로그아웃메시지" role="alert" style="display:none">
+                                <span class="text" data-i18n="logoutMessage"></span>
+                            </div>
+                            <div class="form_message" data-case="메시지 == QR제한메시지" role="alert" style="display:none">
+                                <span class="text" data-i18n=""></span>
+                            </div>
+                            <div class="form_message error" data-case="메시지 == 비밀번호오류메시지" role="alert" style="display:none">
+                                <span class="text"></span>
+                            </div>
+
+                            <div class="login_option device_view">
+                                <div class="option_inner">
+                                    <div class="option_item stay" tabindex="0">
+                                        <input id="loginStay" type="checkbox" name="nvlong" class="input_stay" role="checkbox" aria-checked="false" value="off">
+                                        <label for="loginStay" class="login_stay" data-i18n="loginStay">로그인 유지</label>
+                                    </div>
+                                    <div class="option_item ip">
+                                        <span class="ip_text" data-i18n="ipSecurity">IP 보안</span>
+                                        <div class="ip_switch" tabindex="0">
+                                            <input id="switchIP" type="checkbox" name="ipcheck" role="switch" aria-checked="true" aria-label="IP 보안" data-i18n-aria="ipSecurityAriaLabel">
+                                            <label for="switchIP" class="slider"><span class="blind">에</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="btn_form column pc">
+                                <ul class="btn_login_dual">
+                                    <li class="dual_item login">
+                                        <button type="button" class="btn_done" id="loginBtn_column">
+                                            <span class="text" data-i18n="btnLogin">登录</span>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="btn_form row pc">
+                                <ul class="btn_login_dual">
+                                    <li class="dual_item login">
+                                        <button type="button" class="btn_done" id="loginBtn_row">
+                                            <span class="text" data-i18n="btnLogin">로그인</span>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+
+                        </form>
+
+                        <div class="find_wrap">
+                            <ul class="find_list">
+                                <li class="find_item"><a target="_blank" id="idinquiry" href="https://nid.naver.com/user2/api/route?m=routeIdInquiry&amp;lang=en_US">
+                                        <span class="find_text" data-i18n="findID">ID 검색</span></a></li>
+                                <li class="find_item"><a target="_blank" id="pwinquiry" href="https://nid.naver.com/user2/api/route?m=routePwInquiry&amp;lang=en_US">
+                                        <span class="find_text" data-i18n="findPw">비밀번호 검색</span></a></li>
+                                <li class="find_item"><a target="_blank" id="join" href="https://nid.naver.com/user2/V2Join?m=agree&amp;lang=en_US&amp;realname=N">
+                                        <span class="find_text green" data-i18n="findSignup">회원 가입</span></a></li>
+                            </ul>
+                        </div>
+
+                        <div class="sns_wrap" data-case="다국어 == en || 다국어 == zh-Hans || 다국어 == zh-Hant || 다국어 == ja || 다국어 == vi" style="">
+                            <ul class="sns_list">
+                                <li class="sns_item">
+                                    <button type="button" id="log.apple" class="icon_apple nlog-click" aria-label="애플" data-href="/oauth/global/initSNS?idp_cd=apple&amp;locale=zh-Hans_CN&amp;svctype=1&amp;postDataKey=&amp;url=https%3A%2F%2Fwww.naver.com%2F&amp;confirm.login=false&amp;cp_cd=">
+                                        <picture>
+                                            <source srcset="https://ssl.pstatic.net/static/nid/login/icon-apple-dark.svg" media="(prefers-color-scheme: dark)">
+                                            <img src="https://ssl.pstatic.net/static/nid/login/icon-apple.svg" width="48" height="48">
+                                        </picture>
+                                    </button>
+                                </li>
+                                <li class="sns_item">
+                                    <button type="button" id="log.google" class="icon_google nlog-click" aria-label="구글" data-href="/oauth/global/initSNS?idp_cd=google&amp;locale=zh-Hans_CN&amp;svctype=1&amp;postDataKey=&amp;url=https%3A%2F%2Fwww.naver.com%2F&amp;confirm.login=false&amp;cp_cd=">
+                                        <picture>
+                                            <source srcset="https://ssl.pstatic.net/static/nid/login/icon-google-dark.svg" media="(prefers-color-scheme: dark)">
+                                            <img src="https://ssl.pstatic.net/static/nid/login/icon-google.svg" width="48" height="48">
+                                        </picture>
+                                    </button>
+                                </li>
+                                <li class="sns_item">
+                                    <button type="button" id="log.line" class="icon_line nlog-click" aria-label="라인" data-href="/oauth/global/initSNS?idp_cd=line&amp;locale=zh-Hans_CN&amp;svctype=1&amp;postDataKey=&amp;url=https%3A%2F%2Fwww.naver.com%2F&amp;confirm.login=false&amp;cp_cd=">
+                                        <img src="https://ssl.pstatic.net/static/nid/login/icon-line.svg" width="48" height="48">
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+
+                <footer class="footer">
+                    <ul class="footer_list" role="contentinfo">
+                        <li class="footer_item"><a href="https://nca.naver.com/chat/account/view" target="_blank" id="fot.smartbot" class="text nlog-click" data-i18n="footer.chatbot">스마트 고객 서비스</a></li>
+                        <li class="footer_item"><a href="https://help.naver.com/service/5640/category/bookmark?lang=en" target="_blank" id="fot.help" class="text nlog-click" data-i18n="footer.help">온라인 도움말</a></li>
+                        <li class="footer_item language">
+                            <button type="button" class="language_text" role="listbox" aria-expanded="false" aria-label="언어 선택">한국어</button>
+                            <ul class="language_list">
+                                <li class="language_item"><button class="btn_language" data-lang="ko">한국어</button></li>
+                                <li class="language_item"><button class="btn_language" data-lang="en">English</button></li>
+                                <li class="language_item"><button class="btn_language hans" data-lang="zh-Hans">中文(简体)</button></li>
+                                <li class="language_item"><button class="btn_language hant" data-lang="zh-Hant">中文(繁體)</button></li>
+                                <li class="language_item"><button class="btn_language ja" data-lang="ja">日本語</button></li>
+                                <li class="language_item"><button class="btn_language" data-lang="vi">Tiếng Việt</button></li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <div class="footer_copyright">
+                        <span class="copyright">© NAVER Corp.</span>
+                    </div>
+                </footer>
+
+            </main>
+        </div>
+    </div>
+</body></html>
