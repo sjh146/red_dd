@@ -1,0 +1,53 @@
+Task 2: f_template/coupang/login.html — clogin.html 정제 (외부 리소스 제거)
+=====================================================================
+
+Source: f_template/coupang/clogin.html (754 lines)
+Target: f_template/coupang/login.html (550 lines)
+
+Verification Results:
+---------------------
+1. Script tag count: 0 ✅ (no <script> tags)
+2. login.css reference: 1 ✅ (local CSS only)
+3. CDN images preserved: 3 ✅ (coupangcdn references intact)
+4. member-logo class: 3 ✅ (logo preserved)
+5. login-email-input id: 1 ✅ (email input preserved)
+6. login-password-input id: 1 ✅ (password input preserved)
+7. External script src references: 0 ✅ (no external JS)
+8. No script tags anywhere: 0 ✅
+
+Items Removed:
+--------------
+- Lines 11-40: All external JS scripts (web-log.umd.min.js, jslog, JsLog setup)
+- Line 53: <noscript> block
+- Line 72: document.domain setting
+- Lines 74-78: I18n and CoupangSite script blocks
+- Lines 21-23: IE conditional comment scripts
+- Lines 27-44: properties script block
+- Line 83: External CSS → changed to login.css
+- Line 87: login.clean.kr_ko-KR.css link removed
+- Line 93: qrcode.min.js removed
+- Lines 97-99: login.min.js preload removed
+- Line 102: wdpop.js removed
+- Body tag: All data-* tracking attributes removed (data-log-pack, data-reference, etc.)
+- memberLogin div: All data-* attributes removed
+- _loginRoot div: All data-* attributes removed
+- Lines 530-531: pc-otp-login-iframe + hidden form removed
+- Lines 597-657: otpLogin-wrapper block removed
+- Line 707: temp-content removed
+- Lines 709-715: modal-container removed
+- Lines 717-726: ctools-ff script + __coupang_ui__ script removed
+- Lines 733-735: login.min.js, scoped-modal, ui-autocomplete, qr-tab-under-line removed
+- Lines 750-754: hXBXAo scripts, sec-overlay, web-inspector, dpop iframe removed
+
+Items Preserved:
+----------------
+- Coupang logo (member-logo with CDN image)
+- Form structure (class/id names intact)
+- Tab headers (email/phone/QR)
+- Input fields, buttons, checkbox
+- Login button, join link, find-id-pw link
+- Footer copyright
+- SVG sprite assets (QR tab icons)
+- QR login tab content
+- biz-register-tip
+- CDN image URLs
