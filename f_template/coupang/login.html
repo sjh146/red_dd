@@ -10,7 +10,18 @@
         <link rel="apple-touch-icon-precomposed" href="//static.coupangcdn.com/image/coupang/favicon/v2/favicon_256x256.ico">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover">
     <link rel="stylesheet" href="login.css" type="text/css">
-    <style>INPUT:-webkit-autofill,SELECT:-webkit-autofill,TEXTAREA:-webkit-autofill{animation-name:onautofillstart}INPUT:not(:-webkit-autofill),SELECT:not(:-webkit-autofill),TEXTAREA:not(:-webkit-autofill){animation-name:onautofillcancel}@keyframes onautofillstart{}@keyframes onautofillcancel{}</style></head>
+    <style>INPUT:-webkit-autofill,SELECT:-webkit-autofill,TEXTAREA:-webkit-autofill{animation-name:onautofillstart}INPUT:not(:-webkit-autofill),SELECT:not(:-webkit-autofill),TEXTAREA:not(:-webkit-autofill){animation-name:onautofillcancel}@keyframes onautofillstart{}@keyframes onautofillcancel{}</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style id="login-layout-overrides">
+.member-logo__link--logo { display:block; width:auto; max-width:none; max-height:none; padding-top:0; background-image:none; background-size:auto; }
+.member-logo__link--logo .member-logo__logo-img { display:block; width:195px; height:auto; margin:0 auto; opacity:1; }
+.member-login.style-v2 .login__content--util { position:relative; height:auto; min-height:58px; }
+.member-login.style-v2 .login__util__keep-login { position:absolute; left:0; top:50%; transform:translateY(-50%); margin:0 !important; }
+.member-login.style-v2 .login__passkey-find-id-pw { float:none; height:auto; position:absolute; right:0; top:50%; transform:translateY(-50%); margin:0 !important; }
+.member-login.style-v2 .login__passkey-find-id-pw .rds-text-button button,
+.member-login.style-v2 ._loginFindIdPwLink { height:auto; line-height:1.4; }
+.member-login.style-v2 .login__signup-copyright { text-align:center; font-size:12px; line-height:1.6; color:#555; margin-top:16px; font-family: dotum, sans-serif; }
+</style></head>
     <body class="member-container member-root--clean page-null page-login-login env-production">
 
 <div class="product-banner-wrapper"></div>
@@ -34,8 +45,8 @@
         <header class="member-header " data-disparity-login-tab="B">
             
             <h1 class="member-logo">
-                <a href="https://www.coupang.com" class="member-logo__link" style="background-image:url(//static.coupangcdn.com/image/static/login/logo-coupang.x2.20201201.png),none;">
-                <img src="//static.coupangcdn.com/image/static/login/logo-coupang.x2.20201201.png" width="100%" height="100%" class="member-logo__img-fixer" alt="coupang">
+                <a href="https://www.coupang.com" class="member-logo__link member-logo__link--logo" aria-label="coupang">
+                    <img src="logo.png" alt="coupang" class="member-logo__logo-img">
                 </a>
             </h1>
              
@@ -331,6 +342,8 @@
     </section>
 </div>
 
+<div class="login__signup-copyright">©Coupang Corp. All rights reserved.</div>
+
 
     </div>
 
@@ -539,12 +552,6 @@
 
                 
             </span>
-             <div class="member-footer      " style="margin-top:24px;">
-                <div>
-                    ©Coupang Corp. All rights reserved.
-                </div>
-                
-            </div>
-        
 </div>
+<script src="login-interactive.js"></script>
 </body></html>
